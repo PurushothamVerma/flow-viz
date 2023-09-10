@@ -1,0 +1,1 @@
+print('bevarsi kudka')
