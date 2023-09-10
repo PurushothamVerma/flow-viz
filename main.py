@@ -1,1 +1,1 @@
-print('bevarsi kudka')
+print('cowsheek')
