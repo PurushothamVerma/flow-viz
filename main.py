@@ -60,7 +60,7 @@ def connecting_components(binary_edges, offset):
 
     return np.array(centroids)                                                                                # returning the centroid values
 
-def DBscan(centroids):
+def dbscan(centroids):
     if len(centroids) > 0:
         eps = 10                                                                           # max distance between 2 samples to be considered neighbours
         min_samples = 1
@@ -135,13 +135,11 @@ def assign_ids(image, cluster_centers):
     for i, (cluster_center, id) in enumerate(zip(cluster_centers, ids)):
         cv2.putText(image, f'ID: {id}', (int(cluster_center[0]), int(cluster_center[1])+ 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
 
-
-    print(len(list(zip(cluster_centers, distances, ids))))
     print(list(zip(cluster_centers, distances, ids)))
     return image, list(zip(cluster_centers, ids))
 
 
-def process_frame_test(frame_number, cluster_centers):
+def process_frame(frame_number, cluster_centers):
     if frame_number > 40:
         return None, cluster_centers  # Skip frames after the first 40
 
@@ -152,7 +150,7 @@ def process_frame_test(frame_number, cluster_centers):
         binary_edges = edge_detector(image)
         dilated_edges = erosion_dilation(binary_edges)
         centroids = connecting_components(dilated_edges, 160)
-        cluster_labels, mean_centroid, average_distance = DBscan(centroids)
+        cluster_labels, mean_centroid, average_distance = dbscan(centroids)
         if mean_centroid is not None:
             image, cluster_center = draw_result(image, cluster_labels, mean_centroid, average_distance)
             cluster_centers.append(cluster_center)
@@ -168,7 +166,7 @@ def process_frame_test(frame_number, cluster_centers):
         return None, cluster_centers
     
 
-def create_video_test():
+def create_video():
     num_frames = 40  # Test on the first 40 frames
     frame_folder = "/content/frames"
     output_folder = "/content/output"
@@ -187,7 +185,7 @@ def create_video_test():
     cluster_centers = []
 
     for frame_number in range(1, num_frames + 1):                                                           # iterates through the frame (it should be 0, num_frames +1 ?)
-        processed_frame, cluster_centers = process_frame_test(frame_number, cluster_centers)                # process_frames_test is called for each frame
+        processed_frame, cluster_centers = process_frame(frame_number, cluster_centers)                # process_frames_test is called for each frame
         if processed_frame is not None:
             out.write(processed_frame)                                                                      # written to the output video
         else:
@@ -203,4 +201,4 @@ output_folder = "/content/frames"
 os.makedirs(output_folder, exist_ok=True)
 extract_frames(video_path, output_folder)
 
-create_video_test()
+create_video()
