@@ -78,13 +78,16 @@ def draw_result(image, cluster_labels, mean_centroid, average_distance):
         # Draw pink circle approximating the cluster area
         cluster_center = (int(mean_centroid[1]) + width // 2 + offset, int(mean_centroid[0]))     # dim of the center cluster
         cv2.circle(image, cluster_center, int(average_distance), (255, 192, 203), 2)              # circle around the clusters
-        # Draw red circle at the mean centroid
+        # Display radius values
+        radius_text = f'Radius: {int(average_distance)}'
+        cv2.putText(image, radius_text, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 192, 203), 2)
+        # Draw red dot at the mean centroid
         cv2.circle(image, cluster_center, 5, (0, 0, 255), -1)                                     # vortex center
         # Calculate and draw the horizontal component line
         horizontal_distance = abs(int(cluster_center[0]) - (width // 2 + offset))
         cv2.line(image, (width // 2 + offset, int(mean_centroid[0])), cluster_center, (0, 255, 0), 2)
         # Display horizontal distance value on the horizontal component line
-        cv2.putText(image, f'Horizontal Distance: {horizontal_distance}', (int(mean_centroid[1]) + width // 2 + offset + 10, int(mean_centroid[0])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        cv2.putText(image, f'Horizontal Distance: {horizontal_distance}', (10,80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     return image, cluster_center
 
 def dist(cluster_centers):
@@ -115,27 +118,37 @@ def dist_horizontal(cluster_centers):
     return distances
 
 
-def assign_ids(image, cluster_centers):
+def assign_ids(image, cluster_centers, frame_number, frame_rate):
     ids = [0]  # Start with the first ID
-
     distances = dist_horizontal(cluster_centers)
+    cumulative_distances = {0: 0.0}  # Initialize cumulative distances with ID 0
+    frame_duration_seconds = 0.0 #frame_number / frame_rate
 
     for i, distance in enumerate(distances):
         if cluster_centers[i][0] < 1500 and distance > 65:
             ids.append(ids[-1] + 1)  # Assign a new ID
+            cumulative_distances[ids[-1]] = 0.0  # Reset the cumulative distance for the new ID
+            frame_duration_seconds = 0.0
         else:
             ids.append(ids[-1])  # Retain the same ID
+            cumulative_distances[ids[-1]] += distance  # Accumulate the distance for the current ID
+
+        frame_duration_seconds = round(frame_duration_seconds + 0.1, 2)  # Increment frame duration by 0.1 seconds
 
     # Keeping only the last ID and removing everything else
     if len(ids)>1:
       ids = ids[-1:]
       cluster_centers = cluster_centers[-1:]
 
-    # printing the ids
+    # Printing the IDs - cumulative distances and duration
+      
     for i, (cluster_center, id) in enumerate(zip(cluster_centers, ids)):
-        cv2.putText(image, f'ID: {id}', (int(cluster_center[0]), int(cluster_center[1])+ 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+        cv2.putText(image, f'ID: {id} - Distance: {cumulative_distances[id]:.2f}',
+                    (10,100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+        cv2.putText(image, f'Duration: {frame_duration_seconds:.2f}s',
+                    (10,120), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
-    print(list(zip(cluster_centers, distances, ids)))
+    print(list(zip(cluster_centers, cumulative_distances, ids)))
     return image, list(zip(cluster_centers, ids))
 
 
