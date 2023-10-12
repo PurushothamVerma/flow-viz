@@ -1,10 +1,11 @@
-import cv2
+import math
 import os
-from matplotlib import pyplot as plt
+
+import cv2
 import numpy as np
+from matplotlib import pyplot as plt
 from skimage.measure import label, regionprops
 from sklearn.cluster import DBSCAN
-import math
 
 
 def extract_frames(video_path, output_folder):
